@@ -1,0 +1,174 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["views"]
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model address {
+  id               Int         @id @default(autoincrement())
+  latitude         Float?
+  longitude        Float?
+  easting_m        Int?
+  northing_m       Int?
+  easting_rounded  Int?
+  northing_rounded Int?
+  street_id        Int
+  stn_ground_name  String?     @db.VarChar(45)
+  post_code        String      @db.VarChar(45)
+  streets          streets     @relation(fields: [street_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Address_Streets1")
+  incidents        incidents[]
+
+  @@index([street_id], map: "fk_Address_Streets1_idx")
+}
+
+model animalgroupparents {
+  id        Int         @id @default(autoincrement())
+  name      String      @db.VarChar(255)
+  incidents incidents[]
+}
+
+model boroughs {
+  code  Int     @id
+  name  String? @db.VarChar(45)
+  wards wards[]
+}
+
+model denormalized {
+  incident_number               String    @id @db.VarChar(45)
+  date_time_of_call             DateTime? @db.DateTime(0)
+  cal_year                      Int?
+  fin_year                      String?   @db.VarChar(25)
+  special_service               String?   @db.VarChar(60)
+  pump_count                    Int?
+  pump_hours_total              Int?
+  hourly_notional_cost          Int?
+  incident_notional_cost        Int?
+  final_description             String?   @db.VarChar(255)
+  animal_group_parent           String?   @db.VarChar(255)
+  origin_of_call                String?   @db.VarChar(45)
+  property_type                 String?   @db.VarChar(255)
+  property_category             String?   @db.VarChar(255)
+  special_service_type_category String?   @db.VarChar(45)
+  special_service_type          String?   @db.VarChar(255)
+  ward_code                     Int?
+  ward                          String?   @db.VarChar(255)
+  borough_code                  Int?
+  borough                       String?   @db.VarChar(45)
+  stn_ground_name               String?   @db.VarChar(45)
+  uprn                          String?   @db.VarChar(45)
+  street                        String?   @db.VarChar(255)
+  usrn                          String?   @db.VarChar(45)
+  post_code_district            String?   @db.VarChar(45)
+  easting_m                     Int?
+  northing_m                    Int?
+  easting_rounded               Int?
+  northing_rounded              Int?
+  latitude                      Float?
+  longitude                     Float?
+}
+
+model incidents {
+  incidentNumber          String             @id @db.VarChar(45)
+  date_time_of_call       DateTime?          @db.DateTime(0)
+  finYear                 String?            @db.VarChar(25)
+  pump_count              Int?
+  pump_hours_total        Int?
+  hourly_notional_cost    Int?
+  incident_notional_cost  Int?
+  animal_group_parents_id Int
+  final_description       String?            @db.VarChar(255)
+  originofcall_id         Int
+  property_types_id       Int
+  special_service_type_id Int
+  address_id              Int?
+  address                 address?           @relation(fields: [address_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Incidents_Address1")
+  animalgroupparents      animalgroupparents @relation(fields: [animal_group_parents_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Incidents_AnimalGroupParents")
+  originofcall            originofcall       @relation(fields: [originofcall_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Incidents_OriginOfCall1")
+  propertytypes           propertytypes      @relation(fields: [property_types_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Incidents_PropertyTypes1")
+  specialservicetype      specialservicetype @relation(fields: [special_service_type_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Incidents_SpecialServiceType1")
+
+  @@index([address_id], map: "fk_Incidents_Address1_idx")
+  @@index([animal_group_parents_id], map: "fk_Incidents_AnimalGroupParents_idx")
+  @@index([originofcall_id], map: "fk_Incidents_OriginOfCall1_idx")
+  @@index([property_types_id], map: "fk_Incidents_PropertyTypes1_idx")
+  @@index([special_service_type_id], map: "fk_Incidents_SpecialServiceType1_idx")
+}
+
+model originofcall {
+  id        Int         @id @default(autoincrement())
+  name      String?     @db.VarChar(45)
+  incidents incidents[]
+}
+
+model propertycategories {
+  id            Int             @id @default(autoincrement())
+  category      String?         @db.VarChar(45)
+  propertytypes propertytypes[]
+}
+
+model propertytypes {
+  id                 Int                @id @default(autoincrement())
+  name               String?            @db.VarChar(255)
+  category_id        Int
+  incidents          incidents[]
+  propertycategories propertycategories @relation(fields: [category_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_PropertyTypes_PropertyCategories1")
+
+  @@index([category_id], map: "fk_PropertyTypes_PropertyCategories1_idx")
+}
+
+model specialservicetype {
+  id                         Int                        @id @default(autoincrement())
+  name                       String?                    @db.VarChar(255)
+  category_id                Int
+  incidents                  incidents[]
+  specialservicetypecategory specialservicetypecategory @relation(fields: [category_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_SpecialServiceType_SpecialServiceTypeCategory1")
+
+  @@index([category_id], map: "fk_SpecialServiceType_SpecialServiceTypeCategory1_idx")
+}
+
+model specialservicetypecategory {
+  id                 Int                  @id @default(autoincrement())
+  category           String?              @db.VarChar(45)
+  specialservicetype specialservicetype[]
+}
+
+model streets {
+  id        Int       @id @default(autoincrement())
+  USRN      Int?
+  name      String?   @db.VarChar(255)
+  ward_code Int
+  address   address[]
+  wards     wards     @relation(fields: [ward_code], references: [code], onDelete: NoAction, onUpdate: NoAction, map: "fk_Streets_Wards1")
+
+  @@index([ward_code], map: "fk_Streets_Wards1_idx")
+}
+
+model wards {
+  code         Int       @unique
+  name         String?   @db.VarChar(45)
+  borough_code Int
+  streets      streets[]
+  boroughs     boroughs  @relation(fields: [borough_code], references: [code], onDelete: NoAction, onUpdate: NoAction, map: "fk_Wards_Boroughs1")
+
+  @@id([code, borough_code])
+  @@index([borough_code], map: "fk_Wards_Boroughs1_idx")
+}
+
+view threepumpincidents {
+  incidentNumber      String    @id @db.VarChar(45)
+  date_time_of_call   DateTime? @db.DateTime(0)
+  finYear             String?   @db.VarChar(25)
+  pump_count          Int?
+  pump_hours_total    Int?
+  animal_group_parent String?   @db.VarChar(255)
+}
+
+view incidentcountsbyyear {
+  incident_year_id Int     @id @default(0)
+  year             String? @unique @db.VarChar(4)
+  incident_count   Int     @default(0)
+}
